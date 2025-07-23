@@ -40,7 +40,7 @@ describe('Review System Microservice (e2e)', () => {
       return request(app.getHttpServer())
         .get('/ingestion/status')
         .expect(200)
-        .expect((res) => {
+        .expect(res => {
           expect(res.body).toHaveProperty('success', true);
           expect(res.body).toHaveProperty('isRunning');
           expect(res.body).toHaveProperty('stats');
@@ -56,7 +56,7 @@ describe('Review System Microservice (e2e)', () => {
       return request(app.getHttpServer())
         .post('/ingestion/trigger')
         .expect(200)
-        .expect((res) => {
+        .expect(res => {
           expect(res.body).toHaveProperty('success');
           expect(res.body).toHaveProperty('message');
           expect(res.body).toHaveProperty('result');
@@ -68,14 +68,12 @@ describe('Review System Microservice (e2e)', () => {
 
     it('should handle concurrent ingestion requests', async () => {
       // Trigger multiple concurrent requests
-      const requests = Array(3).fill(null).map(() =>
-        request(app.getHttpServer())
-          .post('/ingestion/trigger')
-          .expect(200)
-      );
+      const requests = Array(3)
+        .fill(null)
+        .map(() => request(app.getHttpServer()).post('/ingestion/trigger').expect(200));
 
       const responses = await Promise.all(requests);
-      
+
       // All should succeed
       responses.forEach(response => {
         expect(response.body).toHaveProperty('success', true);
@@ -89,9 +87,7 @@ describe('Review System Microservice (e2e)', () => {
     });
 
     it('should handle invalid routes', () => {
-      return request(app.getHttpServer())
-        .get('/invalid-route')
-        .expect(404);
+      return request(app.getHttpServer()).get('/invalid-route').expect(404);
     });
   });
 

@@ -25,16 +25,14 @@ describe('Logger', () => {
     it('should log info messages', () => {
       Logger.log('Test message');
 
-      expect(consoleSpy.log).toHaveBeenCalledWith(
-        expect.stringContaining('[INFO] Test message')
-      );
+      expect(consoleSpy.log).toHaveBeenCalledWith(expect.stringContaining('[INFO] Test message'));
     });
 
     it('should log info messages with context', () => {
       Logger.log('Test message', { key: 'value' });
 
       expect(consoleSpy.log).toHaveBeenCalledWith(
-        expect.stringContaining('[INFO] Test message | Context: {"key":"value"}')
+        expect.stringContaining('[INFO] Test message | Context: {"key":"value"}'),
       );
     });
   });
@@ -44,7 +42,7 @@ describe('Logger', () => {
       Logger.error('Error message');
 
       expect(consoleSpy.error).toHaveBeenCalledWith(
-        expect.stringContaining('[ERROR] Error message')
+        expect.stringContaining('[ERROR] Error message'),
       );
     });
 
@@ -53,18 +51,16 @@ describe('Logger', () => {
       Logger.error('Error occurred', error);
 
       expect(consoleSpy.error).toHaveBeenCalledWith(
-        expect.stringContaining('[ERROR] Error occurred')
+        expect.stringContaining('[ERROR] Error occurred'),
       );
-      expect(consoleSpy.error).toHaveBeenCalledWith(
-        expect.stringContaining('Test error')
-      );
+      expect(consoleSpy.error).toHaveBeenCalledWith(expect.stringContaining('Test error'));
     });
 
     it('should log error messages with custom context', () => {
       Logger.error('Error occurred', { custom: 'context' });
 
       expect(consoleSpy.error).toHaveBeenCalledWith(
-        expect.stringContaining('[ERROR] Error occurred | Context: {"custom":"context"}')
+        expect.stringContaining('[ERROR] Error occurred | Context: {"custom":"context"}'),
       );
     });
   });
@@ -74,7 +70,7 @@ describe('Logger', () => {
       Logger.warn('Warning message');
 
       expect(consoleSpy.warn).toHaveBeenCalledWith(
-        expect.stringContaining('[WARN] Warning message')
+        expect.stringContaining('[WARN] Warning message'),
       );
     });
 
@@ -82,7 +78,7 @@ describe('Logger', () => {
       Logger.warn('Warning message', { warning: 'context' });
 
       expect(consoleSpy.warn).toHaveBeenCalledWith(
-        expect.stringContaining('[WARN] Warning message | Context: {"warning":"context"}')
+        expect.stringContaining('[WARN] Warning message | Context: {"warning":"context"}'),
       );
     });
   });
@@ -90,17 +86,17 @@ describe('Logger', () => {
   describe('debug', () => {
     it('should log debug messages in development', () => {
       process.env.NODE_ENV = 'development';
-      
+
       Logger.debug('Debug message');
 
       expect(consoleSpy.debug).toHaveBeenCalledWith(
-        expect.stringContaining('[DEBUG] Debug message')
+        expect.stringContaining('[DEBUG] Debug message'),
       );
     });
 
     it('should not log debug messages in production', () => {
       process.env.NODE_ENV = 'production';
-      
+
       Logger.debug('Debug message');
 
       expect(consoleSpy.debug).not.toHaveBeenCalled();
@@ -108,26 +104,36 @@ describe('Logger', () => {
 
     it('should log debug messages with context in development', () => {
       process.env.NODE_ENV = 'development';
-      
+
       Logger.debug('Debug message', { debug: 'context' });
 
       expect(consoleSpy.debug).toHaveBeenCalledWith(
-        expect.stringContaining('[DEBUG] Debug message | Context: {"debug":"context"}')
+        expect.stringContaining('[DEBUG] Debug message | Context: {"debug":"context"}'),
       );
     });
   });
 
   describe('formatMessage', () => {
     it('should format messages with timestamp', () => {
-      const message = (Logger as any).formatMessage('INFO', 'Test message');
-      
-      expect(message).toMatch(/^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] \[INFO\] Test message$/);
+      const message = (
+        Logger as unknown as { formatMessage: (level: string, message: string) => string }
+      ).formatMessage('INFO', 'Test message');
+
+      expect(message).toMatch(
+        /^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] \[INFO\] Test message$/,
+      );
     });
 
     it('should format messages with context', () => {
-      const message = (Logger as any).formatMessage('INFO', 'Test message', { key: 'value' });
-      
-      expect(message).toMatch(/^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] \[INFO\] Test message \| Context: {"key":"value"}$/);
+      const message = (
+        Logger as unknown as {
+          formatMessage: (level: string, message: string, context?: unknown) => string;
+        }
+      ).formatMessage('INFO', 'Test message', { key: 'value' });
+
+      expect(message).toMatch(
+        /^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] \[INFO\] Test message \| Context: {"key":"value"}$/,
+      );
     });
   });
 });

@@ -107,7 +107,7 @@ export class IngestionService {
     return chunks;
   }
 
-  async getIngestionStatus(): Promise<{ isRunning: boolean; stats?: any }> {
+  async getIngestionStatus(): Promise<{ isRunning: boolean; stats?: unknown }> {
     const stats = await this.reviews.getReviewStats();
     return {
       isRunning: this.isRunning,

@@ -17,7 +17,7 @@ describe('S3Service', () => {
 
     service = module.get<S3Service>(S3Service);
     mockS3Client = new S3Client({}) as jest.Mocked<S3Client>;
-    (service as any).client = mockS3Client;
+    (service as unknown as { client: jest.Mocked<S3Client> }).client = mockS3Client;
   });
 
   it('should be defined', () => {
@@ -75,7 +75,9 @@ describe('S3Service', () => {
     it('should handle streaming errors', async () => {
       mockS3Client.send = jest.fn().mockRejectedValue(new Error('Stream Error'));
 
-      await expect(service.streamJsonLines('test-bucket', 'test-file.jl')).rejects.toThrow('Stream Error');
+      await expect(service.streamJsonLines('test-bucket', 'test-file.jl')).rejects.toThrow(
+        'Stream Error',
+      );
     });
   });
 
@@ -86,10 +88,7 @@ describe('S3Service', () => {
 
       const result = await service.parseJsonLines(mockStream);
 
-      expect(result).toEqual([
-        { test: 'data1' },
-        { test: 'data2' },
-      ]);
+      expect(result).toEqual([{ test: 'data1' }, { test: 'data2' }]);
     });
 
     it('should skip malformed JSON lines', async () => {
@@ -98,10 +97,7 @@ describe('S3Service', () => {
 
       const result = await service.parseJsonLines(mockStream);
 
-      expect(result).toEqual([
-        { test: 'data1' },
-        { test: 'data2' },
-      ]);
+      expect(result).toEqual([{ test: 'data1' }, { test: 'data2' }]);
     });
 
     it('should handle empty lines', async () => {
@@ -110,10 +106,7 @@ describe('S3Service', () => {
 
       const result = await service.parseJsonLines(mockStream);
 
-      expect(result).toEqual([
-        { test: 'data1' },
-        { test: 'data2' },
-      ]);
+      expect(result).toEqual([{ test: 'data1' }, { test: 'data2' }]);
     });
   });
 

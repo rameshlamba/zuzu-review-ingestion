@@ -3,8 +3,67 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Review, ProcessedFile } from './reviews.entity';
 import { Logger } from '../utils/logger';
-// import { validate } from 'class-validator';
-// import { plainToClass } from 'class-transformer';
+
+interface ReviewerInfo {
+  countryName?: string;
+  displayMemberName?: string;
+  flagName?: string;
+  reviewGroupName?: string;
+  roomTypeName?: string;
+  countryId?: number;
+  lengthOfStay?: number;
+  reviewGroupId?: number;
+  roomTypeId?: number;
+  reviewerReviewedCount?: number;
+  isExpertReviewer?: boolean;
+  isShowGlobalIcon?: boolean;
+  isShowReviewedCount?: boolean;
+}
+
+interface ReviewComment {
+  hotelReviewId: number;
+  providerId: number;
+  rating: string | number;
+  checkInDateMonthAndYear?: string;
+  encryptedReviewData?: string;
+  formattedRating: string;
+  formattedReviewDate: string;
+  ratingText: string;
+  responderName?: string;
+  responseDateText?: string;
+  responseTranslateSource?: string;
+  reviewComments: string;
+  reviewNegatives?: string;
+  reviewPositives?: string;
+  reviewProviderLogo?: string;
+  reviewProviderText: string;
+  reviewTitle: string;
+  translateSource: string;
+  translateTarget: string;
+  reviewDate: string;
+  originalTitle?: string;
+  originalComment?: string;
+  formattedResponseDate?: string;
+  reviewerInfo?: ReviewerInfo;
+}
+
+interface ReviewData {
+  hotelId: number;
+  platform: string;
+  hotelName: string;
+  comment: ReviewComment;
+  overallByProviders?: unknown[];
+}
+
+interface ReviewStats {
+  totalReviews: number;
+  totalFiles: number;
+  platformStats: Array<{
+    platform: string;
+    count: string;
+    avgRating: string;
+  }>;
+}
 
 @Injectable()
 export class ReviewsService {
@@ -22,7 +81,7 @@ export class ReviewsService {
     return !!processedFile;
   }
 
-  async storeReviews(reviewsData: any[], fileName: string): Promise<void> {
+  async storeReviews(reviewsData: unknown[], fileName: string): Promise<void> {
     const validReviews = [];
     let skippedCount = 0;
 
@@ -35,7 +94,7 @@ export class ReviewsService {
           skippedCount++;
           Logger.warn('Invalid review data skipped', {
             fileName,
-            reviewData: reviewData.comment?.hotelReviewId,
+            reviewData: (reviewData as ReviewData)?.comment?.hotelReviewId,
           });
         }
       } catch (error) {
@@ -62,18 +121,19 @@ export class ReviewsService {
     }
   }
 
-  private transformReviewData(data: any): Partial<Review> {
-    const comment = data.comment;
+  private transformReviewData(data: unknown): Partial<Review> {
+    const reviewData = data as ReviewData;
+    const comment = reviewData.comment;
     const reviewerInfo = comment.reviewerInfo || {};
-    const overallByProviders = data.overallByProviders || [];
+    const overallByProviders = reviewData.overallByProviders || [];
 
     return {
-      hotelId: data.hotelId,
-      platform: data.platform,
-      hotelName: data.hotelName,
+      hotelId: reviewData.hotelId,
+      platform: reviewData.platform,
+      hotelName: reviewData.hotelName,
       hotelReviewId: comment.hotelReviewId,
       providerId: comment.providerId,
-      rating: parseFloat(comment.rating),
+      rating: parseFloat(String(comment.rating)),
       checkInDateMonthAndYear: comment.checkInDateMonthAndYear,
       encryptedReviewData: comment.encryptedReviewData,
       formattedRating: comment.formattedRating,
@@ -160,7 +220,7 @@ export class ReviewsService {
     }
   }
 
-  async getReviewStats(): Promise<any> {
+  async getReviewStats(): Promise<ReviewStats> {
     const totalReviews = await this.reviewRepository.count();
     const totalFiles = await this.processedFileRepository.count();
 

@@ -135,7 +135,7 @@ export class Review {
 
   // Overall Provider Scores (JSON)
   @Column('jsonb', { nullable: true })
-  overallByProviders: any;
+  overallByProviders: unknown;
 
   @CreateDateColumn()
   createdAt: Date;

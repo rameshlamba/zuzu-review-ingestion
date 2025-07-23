@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { Readable } from 'stream';
 import { IngestionService } from './ingestion.service';
 import { S3Service } from '../s3/s3.service';
 import { ReviewsService } from '../reviews/reviews.service';
@@ -60,7 +61,7 @@ describe('IngestionService', () => {
     it('should process new files successfully', async () => {
       const mockFiles = ['agoda_com_2025-04-10.jl'];
       const mockData = [{ hotelId: 123, platform: 'Agoda' }];
-      const mockStream = {} as any;
+      const mockStream = {} as Readable;
       const mockMetadata = { size: 1024, lastModified: new Date() };
 
       mockS3Service.listFiles.mockResolvedValue(mockFiles);
@@ -80,7 +81,10 @@ describe('IngestionService', () => {
 
       expect(mockS3Service.listFiles).toHaveBeenCalledWith('test-bucket', '');
       expect(mockReviewsService.isFileProcessed).toHaveBeenCalledWith('agoda_com_2025-04-10.jl');
-      expect(mockReviewsService.storeReviews).toHaveBeenCalledWith(mockData, 'agoda_com_2025-04-10.jl');
+      expect(mockReviewsService.storeReviews).toHaveBeenCalledWith(
+        mockData,
+        'agoda_com_2025-04-10.jl',
+      );
     });
 
     it('should skip already processed files', async () => {
@@ -131,22 +135,28 @@ describe('IngestionService', () => {
     it('should throw error when S3_BUCKET is missing', async () => {
       delete process.env.S3_BUCKET;
 
-      await expect(service.runIngestion()).rejects.toThrow('S3_BUCKET environment variable is required');
+      await expect(service.runIngestion()).rejects.toThrow(
+        'S3_BUCKET environment variable is required',
+      );
     });
 
     it('should prevent concurrent ingestion', async () => {
-      mockS3Service.listFiles.mockImplementation(() => new Promise(resolve => setTimeout(() => resolve([]), 100)));
+      mockS3Service.listFiles.mockImplementation(
+        () => new Promise(resolve => setTimeout(() => resolve([]), 100)),
+      );
 
       // Start first ingestion
       const firstIngestion = service.runIngestion();
-      
+
       // Try to start second ingestion immediately
       const secondIngestion = service.runIngestion();
 
       const [firstResult, secondResult] = await Promise.all([firstIngestion, secondIngestion]);
 
       // First should process, second should be skipped
-      expect(firstResult.processed + firstResult.skipped + firstResult.errors).toBeGreaterThanOrEqual(0);
+      expect(
+        firstResult.processed + firstResult.skipped + firstResult.errors,
+      ).toBeGreaterThanOrEqual(0);
       expect(secondResult).toEqual({ processed: 0, skipped: 0, errors: 0 });
     });
   });

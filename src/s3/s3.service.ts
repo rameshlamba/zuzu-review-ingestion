@@ -71,7 +71,7 @@ export class S3Service {
     }
   }
 
-  async parseJsonLines(stream: Readable): Promise<any[]> {
+  async parseJsonLines(stream: Readable): Promise<unknown[]> {
     const rl = readline.createInterface({
       input: stream,
       crlfDelay: Infinity, // Handle Windows line endings

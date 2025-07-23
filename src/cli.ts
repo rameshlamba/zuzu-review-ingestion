@@ -23,15 +23,18 @@ async function runCLI() {
 
       case 'status':
         const status = await ingestionService.getIngestionStatus();
+        // eslint-disable-next-line no-console
         console.log(JSON.stringify(status, null, 2));
         break;
 
       case 'stats':
         const stats = await reviewsService.getReviewStats();
+        // eslint-disable-next-line no-console
         console.log(JSON.stringify(stats, null, 2));
         break;
 
       default:
+        // eslint-disable-next-line no-console
         console.log(`
 Review System CLI
 
