@@ -8,7 +8,7 @@ import { Logger } from './utils/logger';
 
 async function runCLI() {
   const app = await NestFactory.createApplicationContext(AppModule);
-  
+
   const command = process.argv[2];
   const ingestionService = app.get(IngestionService);
   const reviewsService = app.get(ReviewsService);
@@ -20,17 +20,17 @@ async function runCLI() {
         const result = await ingestionService.runIngestion();
         Logger.log('Ingestion completed', result);
         break;
-        
+
       case 'status':
         const status = await ingestionService.getIngestionStatus();
         console.log(JSON.stringify(status, null, 2));
         break;
-        
+
       case 'stats':
         const stats = await reviewsService.getReviewStats();
         console.log(JSON.stringify(stats, null, 2));
         break;
-        
+
       default:
         console.log(`
 Review System CLI

@@ -3,8 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Review, ProcessedFile } from './reviews.entity';
 import { Logger } from '../utils/logger';
-import { validate } from 'class-validator';
-import { plainToClass } from 'class-transformer';
+// import { validate } from 'class-validator';
+// import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export class ReviewsService {
@@ -33,7 +33,10 @@ export class ReviewsService {
           validReviews.push(review);
         } else {
           skippedCount++;
-          Logger.warn('Invalid review data skipped', { fileName, reviewData: reviewData.comment?.hotelReviewId });
+          Logger.warn('Invalid review data skipped', {
+            fileName,
+            reviewData: reviewData.comment?.hotelReviewId,
+          });
         }
       } catch (error) {
         skippedCount++;
@@ -53,7 +56,7 @@ export class ReviewsService {
 
     // Mark file as processed
     await this.markFileAsProcessed(fileName, validReviews.length);
-    
+
     if (skippedCount > 0) {
       Logger.warn(`Skipped ${skippedCount} invalid reviews from ${fileName}`);
     }
@@ -111,8 +114,14 @@ export class ReviewsService {
   private validateReviewData(review: Partial<Review>): boolean {
     // Check required fields
     const requiredFields = [
-      'hotelId', 'platform', 'hotelName', 'hotelReviewId', 
-      'providerId', 'rating', 'reviewComments', 'reviewDate'
+      'hotelId',
+      'platform',
+      'hotelName',
+      'hotelReviewId',
+      'providerId',
+      'rating',
+      'reviewComments',
+      'reviewDate',
     ];
 
     for (const field of requiredFields) {
@@ -154,7 +163,7 @@ export class ReviewsService {
   async getReviewStats(): Promise<any> {
     const totalReviews = await this.reviewRepository.count();
     const totalFiles = await this.processedFileRepository.count();
-    
+
     const platformStats = await this.reviewRepository
       .createQueryBuilder('review')
       .select('review.platform', 'platform')

@@ -11,7 +11,7 @@ export class CronTask {
   @Cron(CronExpression.EVERY_DAY_AT_2AM)
   async handleDailyIngestion() {
     Logger.log('Starting scheduled daily ingestion...');
-    
+
     try {
       const result = await this.ingestionService.runIngestion();
       Logger.log('Scheduled ingestion completed', result);
@@ -25,7 +25,7 @@ export class CronTask {
   // @Cron('0 */6 * * *')
   // async handleFrequentIngestion() {
   //   Logger.log('Starting frequent ingestion...');
-  //   
+  //
   //   try {
   //     const result = await this.ingestionService.runIngestion();
   //     Logger.log('Frequent ingestion completed', result);

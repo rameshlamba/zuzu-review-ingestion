@@ -296,12 +296,18 @@ export class CreateReviewTables1690000000000 implements MigrationInterface {
     );
 
     // Create indexes for better performance
-    await queryRunner.query(`CREATE INDEX "IDX_REVIEWS_HOTEL_PLATFORM" ON "reviews" ("hotelId", "platform")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_REVIEWS_HOTEL_PLATFORM" ON "reviews" ("hotelId", "platform")`,
+    );
     await queryRunner.query(`CREATE INDEX "IDX_REVIEWS_DATE" ON "reviews" ("reviewDate")`);
     await queryRunner.query(`CREATE INDEX "IDX_REVIEWS_PROVIDER" ON "reviews" ("providerId")`);
     await queryRunner.query(`CREATE INDEX "IDX_REVIEWS_RATING" ON "reviews" ("rating")`);
-    await queryRunner.query(`CREATE INDEX "IDX_REVIEWS_HOTEL_REVIEW_ID" ON "reviews" ("hotelReviewId")`);
-    await queryRunner.query(`CREATE INDEX "IDX_PROCESSED_FILES_NAME" ON "processed_files" ("fileName")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_REVIEWS_HOTEL_REVIEW_ID" ON "reviews" ("hotelReviewId")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_PROCESSED_FILES_NAME" ON "processed_files" ("fileName")`,
+    );
 
     // Create trigger for updating updatedAt timestamp
     await queryRunner.query(`

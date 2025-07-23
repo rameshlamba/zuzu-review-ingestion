@@ -10,9 +10,8 @@ export class Logger {
   }
 
   static error(message: string, error?: any): void {
-    const errorContext = error instanceof Error 
-      ? { message: error.message, stack: error.stack }
-      : error;
+    const errorContext =
+      error instanceof Error ? { message: error.message, stack: error.stack } : error;
     console.error(this.formatMessage('ERROR', message, errorContext));
   }
 

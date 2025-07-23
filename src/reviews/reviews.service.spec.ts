@@ -1,13 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { ReviewsService } from './reviews.service';
 import { Review, ProcessedFile } from './reviews.entity';
 
 describe('ReviewsService', () => {
   let service: ReviewsService;
-  let reviewRepository: Repository<Review>;
-  let processedFileRepository: Repository<ProcessedFile>;
 
   const mockReviewRepository = {
     save: jest.fn(),
@@ -37,8 +34,6 @@ describe('ReviewsService', () => {
     }).compile();
 
     service = module.get<ReviewsService>(ReviewsService);
-    reviewRepository = module.get<Repository<Review>>(getRepositoryToken(Review));
-    processedFileRepository = module.get<Repository<ProcessedFile>>(getRepositoryToken(ProcessedFile));
   });
 
   it('should be defined', () => {
@@ -48,9 +43,9 @@ describe('ReviewsService', () => {
   describe('isFileProcessed', () => {
     it('should return true if file is already processed', async () => {
       mockProcessedFileRepository.findOne.mockResolvedValue({ fileName: 'test.jl' });
-      
+
       const result = await service.isFileProcessed('test.jl');
-      
+
       expect(result).toBe(true);
       expect(mockProcessedFileRepository.findOne).toHaveBeenCalledWith({
         where: { fileName: 'test.jl' },
@@ -59,37 +54,39 @@ describe('ReviewsService', () => {
 
     it('should return false if file is not processed', async () => {
       mockProcessedFileRepository.findOne.mockResolvedValue(null);
-      
+
       const result = await service.isFileProcessed('test.jl');
-      
+
       expect(result).toBe(false);
     });
   });
 
   describe('storeReviews', () => {
-    const mockReviewData = [{
-      hotelId: 123,
-      platform: 'Agoda',
-      hotelName: 'Test Hotel',
-      comment: {
-        hotelReviewId: 456,
-        providerId: 789,
-        rating: 8.5,
-        reviewComments: 'Great hotel!',
-        reviewDate: '2025-01-22T10:00:00Z',
-        formattedRating: '8.5',
-        formattedReviewDate: 'Jan 22, 2025',
-        ratingText: 'Excellent',
-        reviewProviderText: 'Agoda',
-        reviewTitle: 'Amazing stay',
-        translateSource: 'en',
-        translateTarget: 'en',
-        reviewerInfo: {
-          countryName: 'USA',
-          displayMemberName: 'John D.',
-        }
-      }
-    }];
+    const mockReviewData = [
+      {
+        hotelId: 123,
+        platform: 'Agoda',
+        hotelName: 'Test Hotel',
+        comment: {
+          hotelReviewId: 456,
+          providerId: 789,
+          rating: 8.5,
+          reviewComments: 'Great hotel!',
+          reviewDate: '2025-01-22T10:00:00Z',
+          formattedRating: '8.5',
+          formattedReviewDate: 'Jan 22, 2025',
+          ratingText: 'Excellent',
+          reviewProviderText: 'Agoda',
+          reviewTitle: 'Amazing stay',
+          translateSource: 'en',
+          translateTarget: 'en',
+          reviewerInfo: {
+            countryName: 'USA',
+            displayMemberName: 'John D.',
+          },
+        },
+      },
+    ];
 
     it('should store valid reviews and mark file as processed', async () => {
       mockReviewRepository.save.mockResolvedValue([]);
@@ -116,16 +113,16 @@ describe('ReviewsService', () => {
     it('should return review statistics', async () => {
       mockReviewRepository.count.mockResolvedValue(100);
       mockProcessedFileRepository.count.mockResolvedValue(5);
-      
+
       const mockQueryBuilder = {
         select: jest.fn().mockReturnThis(),
         addSelect: jest.fn().mockReturnThis(),
         groupBy: jest.fn().mockReturnThis(),
-        getRawMany: jest.fn().mockResolvedValue([
-          { platform: 'Agoda', count: '50', avgRating: '7.5' }
-        ]),
+        getRawMany: jest
+          .fn()
+          .mockResolvedValue([{ platform: 'Agoda', count: '50', avgRating: '7.5' }]),
       };
-      
+
       mockReviewRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
 
       const result = await service.getReviewStats();
@@ -133,9 +130,7 @@ describe('ReviewsService', () => {
       expect(result).toEqual({
         totalReviews: 100,
         totalFiles: 5,
-        platformStats: [
-          { platform: 'Agoda', count: '50', avgRating: '7.5' }
-        ],
+        platformStats: [{ platform: 'Agoda', count: '50', avgRating: '7.5' }],
       });
     });
   });

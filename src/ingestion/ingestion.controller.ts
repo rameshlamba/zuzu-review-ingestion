@@ -4,7 +4,7 @@ import { Logger } from '../utils/logger';
 
 @Controller('ingestion')
 export class IngestionController {
-  constructor(private readonly ingestionService: IngestionService) { }
+  constructor(private readonly ingestionService: IngestionService) {}
 
   @Post('trigger')
   @HttpCode(HttpStatus.OK)

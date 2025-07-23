@@ -35,8 +35,9 @@ export class S3Service {
         const result = await this.client.send(command);
 
         if (result.Contents) {
-          const jsonlFiles = result.Contents
-            .filter(obj => obj.Key?.endsWith('.jl') || obj.Key?.endsWith('.jsonl'))
+          const jsonlFiles = result.Contents.filter(
+            obj => obj.Key?.endsWith('.jl') || obj.Key?.endsWith('.jsonl'),
+          )
             .map(obj => obj.Key!)
             .filter(key => key !== prefix); // Exclude the prefix itself if it's a "folder"
 
@@ -93,7 +94,7 @@ export class S3Service {
         } catch (parseError) {
           Logger.warn(`Malformed JSONL line ${lineNumber} skipped`, {
             line: line.substring(0, 100) + (line.length > 100 ? '...' : ''),
-            error: parseError.message
+            error: parseError.message,
           });
         }
       }
@@ -106,7 +107,10 @@ export class S3Service {
     return results;
   }
 
-  async getFileMetadata(bucket: string, key: string): Promise<{ size: number; lastModified: Date }> {
+  async getFileMetadata(
+    bucket: string,
+    key: string,
+  ): Promise<{ size: number; lastModified: Date }> {
     try {
       const command = new GetObjectCommand({ Bucket: bucket, Key: key });
       const response = await this.client.send(command);

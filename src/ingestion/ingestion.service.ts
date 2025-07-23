@@ -9,7 +9,7 @@ export class IngestionService {
 
   constructor(
     private readonly s3: S3Service,
-    private readonly reviews: ReviewsService
+    private readonly reviews: ReviewsService,
   ) {}
 
   async runIngestion(): Promise<{ processed: number; skipped: number; errors: number }> {
@@ -21,17 +21,17 @@ export class IngestionService {
     this.isRunning = true;
     const bucket = process.env.S3_BUCKET;
     const prefix = process.env.S3_PREFIX || '';
-    
+
     if (!bucket) {
       throw new Error('S3_BUCKET environment variable is required');
     }
 
     Logger.log('Starting ingestion process...', { bucket, prefix });
-    
+
     let processed = 0;
     let skipped = 0;
     let errors = 0;
-    
+
     try {
       const files = await this.s3.listFiles(bucket, prefix);
       Logger.log(`Found ${files.length} files to process`);
@@ -46,7 +46,7 @@ export class IngestionService {
       const chunks = this.chunkArray(files, concurrencyLimit);
 
       for (const chunk of chunks) {
-        const promises = chunk.map(async (key) => {
+        const promises = chunk.map(async key => {
           try {
             if (await this.reviews.isFileProcessed(key)) {
               Logger.log(`Skipping already processed file: ${key}`);
@@ -56,25 +56,28 @@ export class IngestionService {
 
             Logger.log(`Processing file: ${key}`);
             const startTime = Date.now();
-            
+
             // Get file metadata for logging
             const metadata = await this.s3.getFileMetadata(bucket, key);
-            Logger.log(`File ${key} - Size: ${metadata.size} bytes, Modified: ${metadata.lastModified}`);
+            Logger.log(
+              `File ${key} - Size: ${metadata.size} bytes, Modified: ${metadata.lastModified}`,
+            );
 
             const stream = await this.s3.streamJsonLines(bucket, key);
             const data = await this.s3.parseJsonLines(stream);
-            
+
             if (data.length === 0) {
               Logger.warn(`No valid data found in file: ${key}`);
               return;
             }
 
             await this.reviews.storeReviews(data, key);
-            
+
             const duration = Date.now() - startTime;
-            Logger.log(`Successfully processed file: ${key} (${data.length} records in ${duration}ms)`);
+            Logger.log(
+              `Successfully processed file: ${key} (${data.length} records in ${duration}ms)`,
+            );
             processed++;
-            
           } catch (error) {
             Logger.error(`Failed to process file: ${key}`, error);
             errors++;
@@ -85,7 +88,6 @@ export class IngestionService {
       }
 
       Logger.log('Ingestion process completed', { processed, skipped, errors });
-      
     } catch (error) {
       Logger.error('Ingestion process failed', error);
       errors++;
