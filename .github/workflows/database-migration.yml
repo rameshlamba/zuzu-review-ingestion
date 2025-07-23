@@ -1,0 +1,73 @@
+name: Database Migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to run migration'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+      migration_action:
+        description: 'Migration action'
+        required: true
+        default: 'run'
+        type: choice
+        options:
+        - run
+        - revert
+        - show
+
+jobs:
+  migrate:
+    name: Run Database Migration
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Setup environment variables
+      run: |
+        echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
+        echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
+        echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> .env
+        echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+        echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+
+    - name: Run migration
+      run: |
+        case "${{ github.event.inputs.migration_action }}" in
+          "run")
+            echo "🚀 Running database migrations..."
+            npm run migration:run
+            ;;
+          "revert")
+            echo "⏪ Reverting last migration..."
+            npm run migration:revert
+            ;;
+          "show")
+            echo "📋 Showing migration status..."
+            npm run migration:show
+            ;;
+        esac
+
+    - name: Verify database schema
+      if: github.event.inputs.migration_action == 'run'
+      run: |
+        echo "🔍 Verifying database schema..."
+        # Add database verification commands here
+        npm run cli:stats

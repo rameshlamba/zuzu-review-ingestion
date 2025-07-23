@@ -1,0 +1,136 @@
+name: Performance Testing
+
+on:
+  schedule:
+    # Run performance tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'package.json'
+
+jobs:
+  performance-test:
+    name: Performance & Load Testing
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: reviews_perf
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Setup test environment
+      run: |
+        cp .env.example .env
+        echo "DB_HOST=localhost" >> .env
+        echo "DB_PORT=5432" >> .env
+        echo "DB_USERNAME=postgres" >> .env
+        echo "DB_PASSWORD=postgres" >> .env
+        echo "DB_NAME=reviews_perf" >> .env
+        echo "AWS_REGION=us-east-1" >> .env
+        echo "AWS_ACCESS_KEY_ID=test" >> .env
+        echo "AWS_SECRET_ACCESS_KEY=test" >> .env
+        echo "S3_BUCKET=test-bucket" >> .env
+        echo "S3_PREFIX=" >> .env
+
+    - name: Run database migrations
+      run: npm run migration:run
+
+    - name: Start application
+      run: |
+        npm run build
+        npm run start:prod &
+        sleep 10
+
+    - name: Install k6 for load testing
+      run: |
+        sudo gpg -k
+        sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+        echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+        sudo apt-get update
+        sudo apt-get install k6
+
+    - name: Create load test script
+      run: |
+        cat > load-test.js << 'EOF'
+        import http from 'k6/http';
+        import { check, sleep } from 'k6';
+
+        export let options = {
+          stages: [
+            { duration: '2m', target: 10 }, // Ramp up
+            { duration: '5m', target: 10 }, // Stay at 10 users
+            { duration: '2m', target: 20 }, // Ramp up to 20 users
+            { duration: '5m', target: 20 }, // Stay at 20 users
+            { duration: '2m', target: 0 },  // Ramp down
+          ],
+          thresholds: {
+            http_req_duration: ['p(95)<500'], // 95% of requests must complete below 500ms
+            http_req_failed: ['rate<0.1'],   // Error rate must be below 10%
+          },
+        };
+
+        export default function () {
+          // Test status endpoint
+          let statusResponse = http.get('http://localhost:3000/ingestion/status');
+          check(statusResponse, {
+            'status endpoint returns 200': (r) => r.status === 200,
+            'status response time < 200ms': (r) => r.timings.duration < 200,
+          });
+
+          sleep(1);
+        }
+        EOF
+
+    - name: Run load tests
+      run: k6 run load-test.js
+
+    - name: Memory and CPU usage test
+      run: |
+        echo "🔍 Checking application resource usage..."
+        ps aux | grep node
+        free -h
+        df -h
+
+    - name: Generate performance report
+      run: |
+        echo "📊 Performance Test Results" > performance-report.md
+        echo "=========================" >> performance-report.md
+        echo "" >> performance-report.md
+        echo "- Test Date: $(date)" >> performance-report.md
+        echo "- Environment: GitHub Actions" >> performance-report.md
+        echo "- Node.js Version: $(node --version)" >> performance-report.md
+        echo "- Database: PostgreSQL 15" >> performance-report.md
+        echo "" >> performance-report.md
+        echo "Load test completed successfully ✅" >> performance-report.md
+
+    - name: Upload performance report
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-report
+        path: performance-report.md
