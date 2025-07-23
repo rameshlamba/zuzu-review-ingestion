@@ -198,32 +198,28 @@ describe('IngestionService', () => {
     it('should chunk array correctly', () => {
       const testArray = [1, 2, 3, 4, 5, 6, 7];
       const chunkSize = 3;
-      
+
       // Access private method for testing
       const result = (service as any).chunkArray(testArray, chunkSize);
-      
-      expect(result).toEqual([
-        [1, 2, 3],
-        [4, 5, 6],
-        [7]
-      ]);
+
+      expect(result).toEqual([[1, 2, 3], [4, 5, 6], [7]]);
     });
 
     it('should handle empty array', () => {
       const testArray: number[] = [];
       const chunkSize = 3;
-      
+
       const result = (service as any).chunkArray(testArray, chunkSize);
-      
+
       expect(result).toEqual([]);
     });
 
     it('should handle chunk size larger than array', () => {
       const testArray = [1, 2];
       const chunkSize = 5;
-      
+
       const result = (service as any).chunkArray(testArray, chunkSize);
-      
+
       expect(result).toEqual([[1, 2]]);
     });
   });
@@ -231,7 +227,7 @@ describe('IngestionService', () => {
   describe('runIngestion with concurrency', () => {
     it('should process files with custom concurrency limit', async () => {
       process.env.INGESTION_CONCURRENCY = '2';
-      
+
       const mockFiles = ['file1.jl', 'file2.jl', 'file3.jl'];
       const mockData = [{ hotelId: 123, platform: 'Agoda' }];
       const mockStream = {} as Readable;
@@ -251,7 +247,7 @@ describe('IngestionService', () => {
         skipped: 0,
         errors: 0,
       });
-      
+
       delete process.env.INGESTION_CONCURRENCY;
     });
 
@@ -283,14 +279,14 @@ describe('IngestionService', () => {
       const mockMetadata = { size: 1024, lastModified: new Date() };
 
       mockS3Service.listFiles.mockResolvedValue(mockFiles);
-      
+
       // First file: success
       // Second file: error
       // Third file: already processed (skipped)
       mockReviewsService.isFileProcessed
         .mockResolvedValueOnce(false) // success.jl
         .mockResolvedValueOnce(false) // error.jl
-        .mockResolvedValueOnce(true);  // skipped.jl
+        .mockResolvedValueOnce(true); // skipped.jl
 
       mockS3Service.getFileMetadata
         .mockResolvedValueOnce(mockMetadata) // success.jl

@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { Review, ProcessedFile } from './reviews.entity';
 import { Logger } from '../utils/logger';
 import { ReviewQueryDto } from './dto/review-query.dto';
-import { PaginatedReviewResponseDto, ReviewResponseDto, ReviewStatsDto } from './dto/review-response.dto';
+import {
+  PaginatedReviewResponseDto,
+  ReviewResponseDto,
+  ReviewStatsDto,
+} from './dto/review-response.dto';
 
 interface ReviewerInfo {
   countryName?: string;
@@ -299,7 +303,7 @@ export class ReviewsService {
     if (search) {
       queryBuilder.andWhere(
         '(review.reviewComments ILIKE :search OR review.reviewTitle ILIKE :search OR review.hotelName ILIKE :search)',
-        { search: `%${search}%` }
+        { search: `%${search}%` },
       );
     }
 
@@ -346,7 +350,7 @@ export class ReviewsService {
 
   async findReviewById(id: number): Promise<ReviewResponseDto | null> {
     const review = await this.reviewRepository.findOne({ where: { id } });
-    
+
     if (!review) {
       return null;
     }
@@ -364,9 +368,7 @@ export class ReviewsService {
     const totalReviews = await baseQuery.getCount();
 
     // Get average rating
-    const avgResult = await baseQuery
-      .select('AVG(review.rating)', 'avgRating')
-      .getRawOne();
+    const avgResult = await baseQuery.select('AVG(review.rating)', 'avgRating').getRawOne();
     const averageRating = parseFloat(avgResult.avgRating) || 0;
 
     // Get platform breakdown
@@ -421,7 +423,7 @@ export class ReviewsService {
     return result.map(r => r.platform);
   }
 
-  private applyFilters(queryBuilder: any, query: ReviewQueryDto): void {
+  private applyFilters(queryBuilder: SelectQueryBuilder<Review>, query: ReviewQueryDto): void {
     const {
       hotelId,
       platform,
@@ -471,7 +473,7 @@ export class ReviewsService {
     if (search) {
       queryBuilder.andWhere(
         '(review.reviewComments ILIKE :search OR review.reviewTitle ILIKE :search OR review.hotelName ILIKE :search)',
-        { search: `%${search}%` }
+        { search: `%${search}%` },
       );
     }
   }

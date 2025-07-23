@@ -13,14 +13,14 @@ export class ReviewResponseDto {
   ratingText: string;
   reviewPositives?: string;
   reviewNegatives?: string;
-  
+
   // Reviewer information
   reviewerCountryName?: string;
   reviewerDisplayName?: string;
   lengthOfStay?: number;
   reviewerReviewedCount?: number;
   isExpertReviewer: boolean;
-  
+
   // Metadata
   createdAt: Date;
   updatedAt: Date;

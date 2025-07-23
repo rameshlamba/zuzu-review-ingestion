@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { S3Service } from './s3.service';
-import { S3Client } from '@aws-sdk/client-s3';
 import { Readable } from 'stream';
 
 // Mock AWS S3 Client
@@ -18,7 +17,7 @@ describe('S3Service', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [S3Service],
     }).compile();
@@ -146,37 +145,28 @@ describe('S3Service', () => {
     it('should handle metadata errors', async () => {
       mockSend.mockRejectedValue(new Error('Metadata Error'));
 
-      await expect(service.getFileMetadata('test-bucket', 'test-file.jl')).rejects.toThrow('Metadata Error');
+      await expect(service.getFileMetadata('test-bucket', 'test-file.jl')).rejects.toThrow(
+        'Metadata Error',
+      );
     });
   });
 
   describe('listFiles with pagination', () => {
     it('should handle paginated results', async () => {
       const mockResponse1 = {
-        Contents: [
-          { Key: 'reviews/file1.jl' },
-          { Key: 'reviews/file2.jl' },
-        ],
+        Contents: [{ Key: 'reviews/file1.jl' }, { Key: 'reviews/file2.jl' }],
         NextContinuationToken: 'token123',
       };
 
       const mockResponse2 = {
-        Contents: [
-          { Key: 'reviews/file3.jl' },
-        ],
+        Contents: [{ Key: 'reviews/file3.jl' }],
       };
 
-      mockSend
-        .mockResolvedValueOnce(mockResponse1)
-        .mockResolvedValueOnce(mockResponse2);
+      mockSend.mockResolvedValueOnce(mockResponse1).mockResolvedValueOnce(mockResponse2);
 
       const result = await service.listFiles('test-bucket', 'reviews/');
 
-      expect(result).toEqual([
-        'reviews/file1.jl',
-        'reviews/file2.jl',
-        'reviews/file3.jl',
-      ]);
+      expect(result).toEqual(['reviews/file1.jl', 'reviews/file2.jl', 'reviews/file3.jl']);
       expect(mockSend).toHaveBeenCalledTimes(2);
     });
 
@@ -195,10 +185,7 @@ describe('S3Service', () => {
 
       const result = await service.listFiles('test-bucket', 'reviews/');
 
-      expect(result).toEqual([
-        'reviews/file1.jl',
-        'reviews/file2.jsonl',
-      ]);
+      expect(result).toEqual(['reviews/file1.jl', 'reviews/file2.jsonl']);
     });
   });
 
@@ -206,7 +193,9 @@ describe('S3Service', () => {
     it('should handle empty response body', async () => {
       mockSend.mockResolvedValue({ Body: null });
 
-      await expect(service.streamJsonLines('test-bucket', 'test-file.jl')).rejects.toThrow('Empty response body for test-file.jl');
+      await expect(service.streamJsonLines('test-bucket', 'test-file.jl')).rejects.toThrow(
+        'Empty response body for test-file.jl',
+      );
     });
   });
 

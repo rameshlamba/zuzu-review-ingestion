@@ -1,7 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule } from '@nestjs/config';
-import { ScheduleModule } from '@nestjs/schedule';
 import { AppModule } from './app.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { S3Module } from './s3/s3.module';

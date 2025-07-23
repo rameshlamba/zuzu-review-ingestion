@@ -120,7 +120,7 @@ describe('ReviewsService', () => {
       mockProcessedFileRepository.save.mockResolvedValue({});
 
       await expect(service.storeReviews(mockReviewData, 'test.jl')).rejects.toThrow(
-        'Database connection failed'
+        'Database connection failed',
       );
     });
 
@@ -130,7 +130,7 @@ describe('ReviewsService', () => {
       mockProcessedFileRepository.save.mockRejectedValue(error);
 
       await expect(service.storeReviews(mockReviewData, 'test.jl')).rejects.toThrow(
-        'Failed to mark file as processed'
+        'Failed to mark file as processed',
       );
     });
 

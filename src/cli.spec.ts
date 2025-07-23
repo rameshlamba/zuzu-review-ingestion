@@ -12,9 +12,9 @@ describe('CLI', () => {
     const fs = require('fs');
     const path = require('path');
     const cliPath = path.join(__dirname, 'cli.ts');
-    
+
     expect(fs.existsSync(cliPath)).toBe(true);
-    
+
     const cliContent = fs.readFileSync(cliPath, 'utf8');
     expect(cliContent).toContain('runCLI');
     expect(cliContent).toContain('ingest');
@@ -27,15 +27,15 @@ describe('CLI', () => {
     const path = require('path');
     const cliPath = path.join(__dirname, 'cli.ts');
     const cliContent = fs.readFileSync(cliPath, 'utf8');
-    
+
     // Check that it reads process.argv[2] for command
     expect(cliContent).toContain('process.argv[2]');
-    
+
     // Check that it has switch statement for commands
     expect(cliContent).toContain('switch');
-    expect(cliContent).toContain('case \'ingest\'');
-    expect(cliContent).toContain('case \'status\'');
-    expect(cliContent).toContain('case \'stats\'');
+    expect(cliContent).toContain("case 'ingest'");
+    expect(cliContent).toContain("case 'status'");
+    expect(cliContent).toContain("case 'stats'");
   });
 
   it('should have error handling', () => {
@@ -43,7 +43,7 @@ describe('CLI', () => {
     const path = require('path');
     const cliPath = path.join(__dirname, 'cli.ts');
     const cliContent = fs.readFileSync(cliPath, 'utf8');
-    
+
     // Check for try-catch block
     expect(cliContent).toContain('try');
     expect(cliContent).toContain('catch');
@@ -55,7 +55,7 @@ describe('CLI', () => {
     const path = require('path');
     const cliPath = path.join(__dirname, 'cli.ts');
     const cliContent = fs.readFileSync(cliPath, 'utf8');
-    
+
     // Check that it closes the app context
     expect(cliContent).toContain('app.close()');
     expect(cliContent).toContain('finally');

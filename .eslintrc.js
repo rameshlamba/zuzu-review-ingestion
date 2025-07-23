@@ -25,4 +25,14 @@ module.exports = {
     'no-console': 'warn',
     'prefer-const': 'error',
   },
+  overrides: [
+    {
+      files: ['**/*.spec.ts', '**/*.test.ts', '**/test/**/*.ts'],
+      rules: {
+        '@typescript-eslint/no-var-requires': 'off',
+        '@typescript-eslint/no-unused-vars': 'off',
+        '@typescript-eslint/no-explicit-any': 'off',
+      },
+    },
+  ],
 };

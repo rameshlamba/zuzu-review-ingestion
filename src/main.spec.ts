@@ -1,15 +1,15 @@
 describe('Main Bootstrap', () => {
   // Since main.ts has side effects and auto-executes, we'll test its structure and logic
-  
+
   it('should have proper bootstrap function structure', () => {
     const fs = require('fs');
     const path = require('path');
     const mainPath = path.join(__dirname, 'main.ts');
-    
+
     expect(fs.existsSync(mainPath)).toBe(true);
-    
+
     const mainContent = fs.readFileSync(mainPath, 'utf8');
-    
+
     // Check for essential bootstrap components
     expect(mainContent).toContain('NestFactory.create');
     expect(mainContent).toContain('AppModule');
@@ -22,7 +22,7 @@ describe('Main Bootstrap', () => {
     const path = require('path');
     const mainPath = path.join(__dirname, 'main.ts');
     const mainContent = fs.readFileSync(mainPath, 'utf8');
-    
+
     // Check validation pipe configuration
     expect(mainContent).toContain('transform: true');
     expect(mainContent).toContain('whitelist: true');
@@ -34,7 +34,7 @@ describe('Main Bootstrap', () => {
     const path = require('path');
     const mainPath = path.join(__dirname, 'main.ts');
     const mainContent = fs.readFileSync(mainPath, 'utf8');
-    
+
     // Check port handling
     expect(mainContent).toContain('process.env.PORT');
     expect(mainContent).toContain('3000'); // default port
@@ -45,7 +45,7 @@ describe('Main Bootstrap', () => {
     const path = require('path');
     const mainPath = path.join(__dirname, 'main.ts');
     const mainContent = fs.readFileSync(mainPath, 'utf8');
-    
+
     // Check error handling
     expect(mainContent).toContain('catch');
     expect(mainContent).toContain('process.exit(1)');
@@ -57,7 +57,7 @@ describe('Main Bootstrap', () => {
     const path = require('path');
     const mainPath = path.join(__dirname, 'main.ts');
     const mainContent = fs.readFileSync(mainPath, 'utf8');
-    
+
     // Check logging
     expect(mainContent).toContain('Logger.log');
     expect(mainContent).toContain('running on port');

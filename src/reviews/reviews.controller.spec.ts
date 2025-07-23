@@ -3,7 +3,11 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 import { ReviewsController } from './reviews.controller';
 import { ReviewsService } from './reviews.service';
 import { ReviewQueryDto } from './dto/review-query.dto';
-import { PaginatedReviewResponseDto, ReviewResponseDto, ReviewStatsDto } from './dto/review-response.dto';
+import {
+  PaginatedReviewResponseDto,
+  ReviewResponseDto,
+  ReviewStatsDto,
+} from './dto/review-response.dto';
 
 describe('ReviewsController', () => {
   let controller: ReviewsController;
@@ -187,7 +191,7 @@ describe('ReviewsController', () => {
       mockReviewsService.findReviews.mockResolvedValue(emptyResponse);
 
       await expect(controller.getHotelReviews(hotelId, query)).rejects.toThrow(
-        new HttpException(`No reviews found for hotel ID ${hotelId}`, HttpStatus.NOT_FOUND)
+        new HttpException(`No reviews found for hotel ID ${hotelId}`, HttpStatus.NOT_FOUND),
       );
     });
 
@@ -216,7 +220,7 @@ describe('ReviewsController', () => {
       mockReviewsService.findReviewById.mockResolvedValue(null);
 
       await expect(controller.getReviewById(reviewId)).rejects.toThrow(
-        new HttpException(`Review with ID ${reviewId} not found`, HttpStatus.NOT_FOUND)
+        new HttpException(`Review with ID ${reviewId} not found`, HttpStatus.NOT_FOUND),
       );
     });
 
