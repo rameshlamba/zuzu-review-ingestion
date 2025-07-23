@@ -1,0 +1,30 @@
+{
+  "entryPoints": ["src"],
+  "entryPointStrategy": "expand",
+  "out": "docs/api",
+  "theme": "default",
+  "name": "Review System Microservice API Documentation",
+  "includeVersion": true,
+  "excludePrivate": true,
+  "excludeProtected": false,
+  "excludeExternals": true,
+  "readme": "README.md",
+  "gitRevision": "main",
+  "exclude": [
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "**/node_modules/**",
+    "**/dist/**"
+  ],
+  "categorizeByGroup": true,
+  "defaultCategory": "Other",
+  "categoryOrder": [
+    "Controllers",
+    "Services", 
+    "Entities",
+    "DTOs",
+    "Interfaces",
+    "Utilities",
+    "*"
+  ]
+}
