@@ -45,7 +45,7 @@ jobs:
       run: npm ci
 
     - name: Run linting
-      run: npm run lint
+      run: npm run lint:check
 
     - name: Run type checking
       run: npx tsc --noEmit
@@ -71,7 +71,7 @@ jobs:
       run: npm run test:cov
 
     - name: Upload coverage reports
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: ./coverage/lcov.info
         flags: unittests

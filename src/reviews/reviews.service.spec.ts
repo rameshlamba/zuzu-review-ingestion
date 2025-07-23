@@ -19,6 +19,9 @@ describe('ReviewsService', () => {
   };
 
   beforeEach(async () => {
+    // Reset all mocks before each test
+    jest.clearAllMocks();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ReviewsService,
@@ -99,7 +102,10 @@ describe('ReviewsService', () => {
     });
 
     it('should skip invalid reviews', async () => {
-      const invalidData = [{ invalid: 'data' }];
+      const invalidData = [
+        { invalid: 'data' }, // Missing required fields
+        { hotelId: 123 }, // Missing other required fields
+      ];
       mockProcessedFileRepository.save.mockResolvedValue({});
 
       await service.storeReviews(invalidData, 'test.jl');
