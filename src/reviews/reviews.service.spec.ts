@@ -113,6 +113,90 @@ describe('ReviewsService', () => {
       expect(mockReviewRepository.save).not.toHaveBeenCalled();
       expect(mockProcessedFileRepository.save).toHaveBeenCalled();
     });
+
+    it('should handle database save errors', async () => {
+      const error = new Error('Database connection failed');
+      mockReviewRepository.save.mockRejectedValue(error);
+      mockProcessedFileRepository.save.mockResolvedValue({});
+
+      await expect(service.storeReviews(mockReviewData, 'test.jl')).rejects.toThrow(
+        'Database connection failed'
+      );
+    });
+
+    it('should handle processed file save errors', async () => {
+      const error = new Error('Failed to mark file as processed');
+      mockReviewRepository.save.mockResolvedValue([]);
+      mockProcessedFileRepository.save.mockRejectedValue(error);
+
+      await expect(service.storeReviews(mockReviewData, 'test.jl')).rejects.toThrow(
+        'Failed to mark file as processed'
+      );
+    });
+
+    it('should handle reviews with invalid rating range', async () => {
+      const invalidRatingData = [
+        {
+          ...mockReviewData[0],
+          comment: {
+            ...mockReviewData[0].comment,
+            rating: 15, // Invalid rating > 10
+          },
+        },
+      ];
+      mockProcessedFileRepository.save.mockResolvedValue({});
+
+      await service.storeReviews(invalidRatingData, 'test.jl');
+
+      expect(mockReviewRepository.save).not.toHaveBeenCalled();
+      expect(mockProcessedFileRepository.save).toHaveBeenCalled();
+    });
+
+    it('should handle reviews with invalid date', async () => {
+      const invalidDateData = [
+        {
+          ...mockReviewData[0],
+          comment: {
+            ...mockReviewData[0].comment,
+            reviewDate: 'invalid-date',
+          },
+        },
+      ];
+      mockProcessedFileRepository.save.mockResolvedValue({});
+
+      await service.storeReviews(invalidDateData, 'test.jl');
+
+      expect(mockReviewRepository.save).not.toHaveBeenCalled();
+      expect(mockProcessedFileRepository.save).toHaveBeenCalled();
+    });
+
+    it('should handle reviews with rating of 0', async () => {
+      const zeroRatingData = [
+        {
+          ...mockReviewData[0],
+          comment: {
+            ...mockReviewData[0].comment,
+            rating: 0, // Valid rating of 0
+          },
+        },
+      ];
+      mockReviewRepository.save.mockResolvedValue([]);
+      mockProcessedFileRepository.save.mockResolvedValue({});
+
+      await service.storeReviews(zeroRatingData, 'test.jl');
+
+      expect(mockReviewRepository.save).toHaveBeenCalled();
+      expect(mockProcessedFileRepository.save).toHaveBeenCalled();
+    });
+
+    it('should handle empty reviews array', async () => {
+      mockProcessedFileRepository.save.mockResolvedValue({});
+
+      await service.storeReviews([], 'test.jl');
+
+      expect(mockReviewRepository.save).not.toHaveBeenCalled();
+      expect(mockProcessedFileRepository.save).toHaveBeenCalled();
+    });
   });
 
   describe('getReviewStats', () => {

@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Review, ProcessedFile } from './reviews.entity';
 import { Logger } from '../utils/logger';
+import { ReviewQueryDto } from './dto/review-query.dto';
+import { PaginatedReviewResponseDto, ReviewResponseDto, ReviewStatsDto } from './dto/review-response.dto';
 
 interface ReviewerInfo {
   countryName?: string;
@@ -236,6 +238,267 @@ export class ReviewsService {
       totalReviews,
       totalFiles,
       platformStats,
+    };
+  }
+
+  async findReviews(query: ReviewQueryDto): Promise<PaginatedReviewResponseDto> {
+    const {
+      page = 1,
+      limit = 20,
+      hotelId,
+      platform,
+      hotelName,
+      minRating,
+      maxRating,
+      startDate,
+      endDate,
+      reviewerCountry,
+      search,
+      sortBy = 'reviewDate',
+      sortOrder = 'DESC',
+      includeStats = false,
+    } = query;
+
+    const queryBuilder = this.reviewRepository.createQueryBuilder('review');
+
+    // Apply filters
+    if (hotelId) {
+      queryBuilder.andWhere('review.hotelId = :hotelId', { hotelId });
+    }
+
+    if (platform) {
+      queryBuilder.andWhere('review.platform ILIKE :platform', { platform: `%${platform}%` });
+    }
+
+    if (hotelName) {
+      queryBuilder.andWhere('review.hotelName ILIKE :hotelName', { hotelName: `%${hotelName}%` });
+    }
+
+    if (minRating !== undefined) {
+      queryBuilder.andWhere('review.rating >= :minRating', { minRating });
+    }
+
+    if (maxRating !== undefined) {
+      queryBuilder.andWhere('review.rating <= :maxRating', { maxRating });
+    }
+
+    if (startDate) {
+      queryBuilder.andWhere('review.reviewDate >= :startDate', { startDate });
+    }
+
+    if (endDate) {
+      queryBuilder.andWhere('review.reviewDate <= :endDate', { endDate });
+    }
+
+    if (reviewerCountry) {
+      queryBuilder.andWhere('review.reviewerCountryName ILIKE :reviewerCountry', {
+        reviewerCountry: `%${reviewerCountry}%`,
+      });
+    }
+
+    if (search) {
+      queryBuilder.andWhere(
+        '(review.reviewComments ILIKE :search OR review.reviewTitle ILIKE :search OR review.hotelName ILIKE :search)',
+        { search: `%${search}%` }
+      );
+    }
+
+    // Apply sorting
+    queryBuilder.orderBy(`review.${sortBy}`, sortOrder);
+
+    // Get total count for pagination
+    const total = await queryBuilder.getCount();
+
+    // Apply pagination
+    const offset = (page - 1) * limit;
+    queryBuilder.skip(offset).take(limit);
+
+    // Execute query
+    const reviews = await queryBuilder.getMany();
+
+    // Transform to response DTOs
+    const data = reviews.map(this.transformToResponseDto);
+
+    // Calculate pagination info
+    const totalPages = Math.ceil(total / limit);
+    const hasNext = page < totalPages;
+    const hasPrev = page > 1;
+
+    const result: PaginatedReviewResponseDto = {
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext,
+        hasPrev,
+      },
+    };
+
+    // Include stats if requested
+    if (includeStats) {
+      result.stats = await this.getDetailedStats(query);
+    }
+
+    return result;
+  }
+
+  async findReviewById(id: number): Promise<ReviewResponseDto | null> {
+    const review = await this.reviewRepository.findOne({ where: { id } });
+    
+    if (!review) {
+      return null;
+    }
+
+    return this.transformToResponseDto(review);
+  }
+
+  async getDetailedStats(query: ReviewQueryDto): Promise<ReviewStatsDto> {
+    const baseQuery = this.reviewRepository.createQueryBuilder('review');
+
+    // Apply same filters as main query (excluding pagination and sorting)
+    this.applyFilters(baseQuery, query);
+
+    // Get total reviews
+    const totalReviews = await baseQuery.getCount();
+
+    // Get average rating
+    const avgResult = await baseQuery
+      .select('AVG(review.rating)', 'avgRating')
+      .getRawOne();
+    const averageRating = parseFloat(avgResult.avgRating) || 0;
+
+    // Get platform breakdown
+    const platformBreakdown = await baseQuery
+      .select('review.platform', 'platform')
+      .addSelect('COUNT(*)', 'count')
+      .addSelect('AVG(review.rating)', 'averageRating')
+      .groupBy('review.platform')
+      .orderBy('COUNT(*)', 'DESC')
+      .getRawMany();
+
+    // Get rating distribution
+    const ratingDistribution = await baseQuery
+      .select('FLOOR(review.rating)', 'rating')
+      .addSelect('COUNT(*)', 'count')
+      .groupBy('FLOOR(review.rating)')
+      .orderBy('FLOOR(review.rating)', 'ASC')
+      .getRawMany();
+
+    // Get date range
+    const dateRange = await baseQuery
+      .select('MIN(review.reviewDate)', 'earliest')
+      .addSelect('MAX(review.reviewDate)', 'latest')
+      .getRawOne();
+
+    return {
+      totalReviews,
+      averageRating: Math.round(averageRating * 100) / 100,
+      platformBreakdown: platformBreakdown.map(p => ({
+        platform: p.platform,
+        count: parseInt(p.count),
+        averageRating: Math.round(parseFloat(p.averageRating) * 100) / 100,
+      })),
+      ratingDistribution: ratingDistribution.map(r => ({
+        rating: parseInt(r.rating),
+        count: parseInt(r.count),
+      })),
+      dateRange: {
+        earliest: dateRange.earliest,
+        latest: dateRange.latest,
+      },
+    };
+  }
+
+  async getAvailablePlatforms(): Promise<string[]> {
+    const result = await this.reviewRepository
+      .createQueryBuilder('review')
+      .select('DISTINCT review.platform', 'platform')
+      .orderBy('review.platform', 'ASC')
+      .getRawMany();
+
+    return result.map(r => r.platform);
+  }
+
+  private applyFilters(queryBuilder: any, query: ReviewQueryDto): void {
+    const {
+      hotelId,
+      platform,
+      hotelName,
+      minRating,
+      maxRating,
+      startDate,
+      endDate,
+      reviewerCountry,
+      search,
+    } = query;
+
+    if (hotelId) {
+      queryBuilder.andWhere('review.hotelId = :hotelId', { hotelId });
+    }
+
+    if (platform) {
+      queryBuilder.andWhere('review.platform ILIKE :platform', { platform: `%${platform}%` });
+    }
+
+    if (hotelName) {
+      queryBuilder.andWhere('review.hotelName ILIKE :hotelName', { hotelName: `%${hotelName}%` });
+    }
+
+    if (minRating !== undefined) {
+      queryBuilder.andWhere('review.rating >= :minRating', { minRating });
+    }
+
+    if (maxRating !== undefined) {
+      queryBuilder.andWhere('review.rating <= :maxRating', { maxRating });
+    }
+
+    if (startDate) {
+      queryBuilder.andWhere('review.reviewDate >= :startDate', { startDate });
+    }
+
+    if (endDate) {
+      queryBuilder.andWhere('review.reviewDate <= :endDate', { endDate });
+    }
+
+    if (reviewerCountry) {
+      queryBuilder.andWhere('review.reviewerCountryName ILIKE :reviewerCountry', {
+        reviewerCountry: `%${reviewerCountry}%`,
+      });
+    }
+
+    if (search) {
+      queryBuilder.andWhere(
+        '(review.reviewComments ILIKE :search OR review.reviewTitle ILIKE :search OR review.hotelName ILIKE :search)',
+        { search: `%${search}%` }
+      );
+    }
+  }
+
+  private transformToResponseDto(review: Review): ReviewResponseDto {
+    return {
+      id: review.id,
+      hotelId: review.hotelId,
+      platform: review.platform,
+      hotelName: review.hotelName,
+      hotelReviewId: review.hotelReviewId,
+      providerId: review.providerId,
+      rating: review.rating,
+      reviewComments: review.reviewComments,
+      reviewDate: review.reviewDate,
+      formattedReviewDate: review.formattedReviewDate,
+      reviewTitle: review.reviewTitle,
+      ratingText: review.ratingText,
+      reviewPositives: review.reviewPositives,
+      reviewNegatives: review.reviewNegatives,
+      reviewerCountryName: review.reviewerCountryName,
+      reviewerDisplayName: review.reviewerDisplayName,
+      lengthOfStay: review.lengthOfStay,
+      reviewerReviewedCount: review.reviewerReviewedCount,
+      isExpertReviewer: review.isExpertReviewer,
+      createdAt: review.createdAt,
+      updatedAt: review.updatedAt,
     };
   }
 }
