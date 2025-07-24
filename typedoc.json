@@ -1,6 +1,20 @@
 {
-  "entryPoints": ["src"],
-  "entryPointStrategy": "expand",
+  "entryPoints": [
+    "src/main.ts",
+    "src/app.module.ts",
+    "src/cli.ts",
+    "src/reviews/reviews.controller.ts",
+    "src/reviews/reviews.service.ts",
+    "src/reviews/reviews.entity.ts",
+    "src/reviews/dto/review-query.dto.ts",
+    "src/reviews/dto/review-response.dto.ts",
+    "src/ingestion/ingestion.controller.ts",
+    "src/ingestion/ingestion.service.ts",
+    "src/ingestion/cron.task.ts",
+    "src/s3/s3.service.ts",
+    "src/config/config.service.ts",
+    "src/utils/logger.ts"
+  ],
   "out": "docs/api",
   "theme": "default",
   "name": "Review System Microservice API Documentation",
@@ -9,7 +23,7 @@
   "excludeProtected": false,
   "excludeExternals": true,
   "readme": "README.md",
-  "gitRevision": "main",
+  "tsconfig": "tsconfig.json",
   "exclude": [
     "**/*.spec.ts",
     "**/*.test.ts",
