@@ -73,8 +73,8 @@ jobs:
 
     - name: Generate API documentation
       run: |
-        # Generate TypeDoc documentation
-        npx typedoc --out docs/api src/
+        # Generate TypeDoc documentation using our configured script
+        npm run docs
         
         # Generate OpenAPI documentation if you have swagger setup
         # npm run docs:generate
