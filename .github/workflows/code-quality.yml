@@ -174,7 +174,7 @@ jobs:
         # npm run docs:generate
 
     - name: Setup Pages
-      uses: actions/configure-pages@v4
+      uses: actions/configure-pages@v5
 
     - name: Upload documentation artifacts
       uses: actions/upload-pages-artifact@v3
